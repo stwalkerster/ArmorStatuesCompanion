@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -11,7 +12,7 @@ version = libs.versions.armorStatuesCompanion.get()
 repositories {
     mavenCentral()
 
-    // Mojang / Fabric for MC + mappings (Loom also wires some of this, but it's safe)
+    // Mojang / Fabric for MC (Loom also wires some of this, but it's safe)
     maven {
         name = "Fabric"
         url = uri("https://maven.fabricmc.net/")
@@ -20,15 +21,10 @@ repositories {
 
 dependencies {
     "minecraft"(libs.minecraft)
-    "mappings"(libs.yarn.mappings) {
-        artifact {
-            classifier = "v2"
-        }
-    }
 
-    modImplementation(libs.fabric.loader)
-    modImplementation(libs.fabric.api)
-    modImplementation(libs.fabric.kotlin)
+    implementation(libs.fabric.loader)
+    implementation(libs.fabric.api)
+    implementation(libs.fabric.kotlin)
 }
 
 tasks.withType<ProcessResources>() {
@@ -40,20 +36,20 @@ tasks.withType<ProcessResources>() {
 }
 
 tasks.withType<JavaCompile>().configureEach {
-    options.release = 21
+    options.release = 25
 }
 
 tasks.withType<KotlinCompile>().all {
-    kotlinOptions {
-        jvmTarget = "21"
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_25)
     }
 }
 
 java {
     withSourcesJar()
 
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
 }
 
 val modrinthToken: String? = System.getenv("MODRINTH_TOKEN")
@@ -63,7 +59,7 @@ if (modrinthToken != null) {
         projectId.set("Eaza1CMt")
         versionNumber.set(libs.versions.armorStatuesCompanion)
         versionType.set("release")
-        uploadFile.set(tasks.remapJar)
+        uploadFile.set(tasks.jar)
         gameVersions.addAll(libs.versions.minecraft.get())
         loaders.add("fabric")
         changelog.set(rootProject.file("CHANGELOG.md").readText())

@@ -1,14 +1,15 @@
 package net.asch.asc.ui.component
 
 import net.asch.asc.ModClient
-import net.minecraft.client.MinecraftClient
-import net.minecraft.client.gl.RenderPipelines
-import net.minecraft.client.gui.DrawContext
-import net.minecraft.client.gui.widget.ClickableWidget
-import net.minecraft.client.gui.widget.PressableWidget
-import net.minecraft.client.input.AbstractInput
-import net.minecraft.text.Text
-import net.minecraft.util.Identifier
+import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.minecraft.client.gui.components.AbstractButton
+import net.minecraft.client.gui.components.AbstractWidget
+import net.minecraft.client.gui.narration.NarrationElementOutput
+import net.minecraft.client.input.InputWithModifiers
+import net.minecraft.client.renderer.RenderPipelines
+import net.minecraft.network.chat.Component
+import net.minecraft.resources.Identifier
 
 /**
  * Nine-slice texture drawing, driven by the corner/center patch sizes (3px corners,
@@ -20,7 +21,7 @@ object NineSliceTexture {
     private const val CENTER = 58
 
     fun draw(
-        context: DrawContext,
+        context: GuiGraphicsExtractor,
         texture: Identifier,
         textureWidth: Int,
         textureHeight: Int,
@@ -51,16 +52,16 @@ object NineSliceTexture {
     }
 
     private fun region(
-        context: DrawContext, texture: Identifier,
+        context: GuiGraphicsExtractor, texture: Identifier,
         x: Int, y: Int, u: Int, v: Int, w: Int, h: Int,
         textureWidth: Int, textureHeight: Int
     ) {
         if (w <= 0 || h <= 0) return
-        context.drawTexture(RenderPipelines.GUI_TEXTURED, texture, x, y, u.toFloat(), v.toFloat(), w, h, textureWidth, textureHeight)
+        context.blit(RenderPipelines.GUI_TEXTURED, texture, x, y, u.toFloat(), v.toFloat(), w, h, textureWidth, textureHeight)
     }
 
     private fun tiledHorizontal(
-        context: DrawContext, texture: Identifier,
+        context: GuiGraphicsExtractor, texture: Identifier,
         x: Int, y: Int, length: Int, thickness: Int,
         u: Int, v: Int, segment: Int,
         textureWidth: Int, textureHeight: Int
@@ -74,7 +75,7 @@ object NineSliceTexture {
     }
 
     private fun tiledVertical(
-        context: DrawContext, texture: Identifier,
+        context: GuiGraphicsExtractor, texture: Identifier,
         x: Int, y: Int, thickness: Int, length: Int,
         u: Int, v: Int, segment: Int,
         textureWidth: Int, textureHeight: Int
@@ -88,7 +89,7 @@ object NineSliceTexture {
     }
 
     private fun tiledBoth(
-        context: DrawContext, texture: Identifier,
+        context: GuiGraphicsExtractor, texture: Identifier,
         x: Int, y: Int, width: Int, height: Int,
         u: Int, v: Int, segment: Int,
         textureWidth: Int, textureHeight: Int
@@ -107,7 +108,7 @@ object NineSliceTexture {
     }
 }
 
-typealias ButtonRenderer = (DrawContext, ClickableWidget) -> Unit
+typealias ButtonRenderer = (GuiGraphicsExtractor, AbstractWidget) -> Unit
 
 /**
  * Looks up the active/hovered/disabled cell in the PNGs the mod already ships, keyed
@@ -115,15 +116,15 @@ typealias ButtonRenderer = (DrawContext, ClickableWidget) -> Unit
  * cell).
  */
 object ButtonTextures {
-    private val BUTTONS = Identifier.of(ModClient.MOD_ID, "textures/gui/buttons.png")
+    private val BUTTONS = Identifier.fromNamespaceAndPath(ModClient.MOD_ID, "textures/gui/buttons.png")
     private const val BUTTONS_SIZE = 192
 
-    private val TOOLBAR_BUTTONS = Identifier.of(ModClient.MOD_ID, "textures/gui/toolbar_buttons.png")
-    private val TOOLBAR_BASE_BUTTONS = Identifier.of(ModClient.MOD_ID, "textures/gui/toolbar_base_buttons.png")
+    private val TOOLBAR_BUTTONS = Identifier.fromNamespaceAndPath(ModClient.MOD_ID, "textures/gui/toolbar_buttons.png")
+    private val TOOLBAR_BASE_BUTTONS = Identifier.fromNamespaceAndPath(ModClient.MOD_ID, "textures/gui/toolbar_base_buttons.png")
     private const val TOOLBAR_TEX_WIDTH = 64
     private const val TOOLBAR_TEX_HEIGHT = 192
 
-    private fun stateV(widget: ClickableWidget): Int = when {
+    private fun stateV(widget: AbstractWidget): Int = when {
         !widget.active -> 128
         widget.isHovered -> 64
         else -> 0
@@ -148,22 +149,22 @@ object ButtonTextures {
  */
 open class NineSliceButtonWidget(
     x: Int, y: Int, width: Int, height: Int,
-    text: Text,
+    text: Component,
     var renderer: ButtonRenderer,
     private val onPressAction: (NineSliceButtonWidget) -> Unit
-) : PressableWidget(x, y, width, height, text) {
+) : AbstractButton(x, y, width, height, text) {
 
-    override fun onPress(input: AbstractInput) {
+    override fun onPress(input: InputWithModifiers) {
         onPressAction(this)
     }
 
-    override fun renderWidget(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
+    override fun extractContents(context: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, delta: Float) {
         renderer(context, this)
-        drawMessage(context, MinecraftClient.getInstance().textRenderer, -1)
+        context.centeredText(Minecraft.getInstance().font, message, x + width / 2, y + (height - 8) / 2, -1)
     }
 
-    override fun appendClickableNarrations(builder: net.minecraft.client.gui.screen.narration.NarrationMessageBuilder) {
-        appendDefaultNarrations(builder)
+    override fun updateWidgetNarration(output: NarrationElementOutput) {
+        defaultButtonNarrationText(output)
     }
 
     companion object {
@@ -171,12 +172,12 @@ open class NineSliceButtonWidget(
         const val PADDING_X = 8
 
         fun of(
-            text: Text,
+            text: Component,
             renderer: ButtonRenderer = ButtonTextures.DEFAULT_RENDERER,
             onPress: (NineSliceButtonWidget) -> Unit
         ): NineSliceButtonWidget {
-            val textRenderer = MinecraftClient.getInstance().textRenderer
-            val width = textRenderer.getWidth(text) + PADDING_X * 2
+            val font = Minecraft.getInstance().font
+            val width = font.width(text) + PADDING_X * 2
             return NineSliceButtonWidget(0, 0, width, DEFAULT_HEIGHT, text, renderer, onPress)
         }
     }

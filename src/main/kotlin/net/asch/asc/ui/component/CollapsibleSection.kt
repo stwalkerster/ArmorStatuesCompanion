@@ -1,9 +1,9 @@
 package net.asch.asc.ui.component
 
-import net.minecraft.client.gui.tooltip.Tooltip
-import net.minecraft.client.gui.widget.DirectionalLayoutWidget
-import net.minecraft.client.gui.widget.Widget
-import net.minecraft.text.Text
+import net.minecraft.client.gui.components.Tooltip
+import net.minecraft.client.gui.layouts.LayoutElement
+import net.minecraft.client.gui.layouts.LinearLayout
+import net.minecraft.network.chat.Component
 
 /**
  * Vanilla has no collapsible container, so this is a small header button (toggles
@@ -12,18 +12,18 @@ import net.minecraft.text.Text
  */
 class CollapsibleSection(
     private val key: String,
-    private val title: Text,
+    private val title: Component,
     defaultExpanded: Boolean,
     private val tooltipKey: String?,
-    private val contentBuilder: () -> Widget
+    private val contentBuilder: () -> LayoutElement
 ) {
     var expanded: Boolean = EXPANDED.getOrDefault(key, defaultExpanded)
         private set
 
-    fun addTo(target: DirectionalLayoutWidget, onToggle: () -> Unit) {
+    fun addTo(target: LinearLayout, onToggle: () -> Unit) {
         val prefix = if (expanded) "▼ " else "▶ "
         val header = NineSliceButtonWidget.of(
-            Text.literal(prefix).append(title),
+            Component.literal(prefix).append(title),
             ButtonTextures.TOOLBAR_TOOL_RENDERER
         ) {
             expanded = !expanded
@@ -31,12 +31,12 @@ class CollapsibleSection(
             onToggle()
         }
         if (tooltipKey != null) {
-            header.setTooltip(Tooltip.of(Text.translatable("asc.screen.tooltip.$tooltipKey")))
+            header.setTooltip(Tooltip.create(Component.translatable("asc.screen.tooltip.$tooltipKey")))
         }
-        target.add(header)
+        target.addChild(header)
 
         if (expanded) {
-            target.add(contentBuilder())
+            target.addChild(contentBuilder())
         }
     }
 

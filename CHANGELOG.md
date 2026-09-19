@@ -1,2 +1,1 @@
-- Minecraft 1.21.10 support
-- Migration away from owo-lib to native Minecraft UI components
+- Minecraft 26.3 support

@@ -1,25 +1,25 @@
 package net.asch.asc.ui.component
 
 import net.asch.asc.as_datapack.triggers.*
-import net.minecraft.client.MinecraftClient
-import net.minecraft.client.gui.tooltip.Tooltip
-import net.minecraft.client.gui.widget.ClickableWidget
-import net.minecraft.client.gui.widget.DirectionalLayoutWidget
-import net.minecraft.client.gui.widget.GridWidget
-import net.minecraft.client.gui.widget.TextWidget
-import net.minecraft.client.gui.widget.Widget
-import net.minecraft.text.Text
+import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.components.AbstractWidget
+import net.minecraft.client.gui.components.StringWidget
+import net.minecraft.client.gui.components.Tooltip
+import net.minecraft.client.gui.layouts.GridLayout
+import net.minecraft.client.gui.layouts.Layout
+import net.minecraft.client.gui.layouts.LinearLayout
+import net.minecraft.network.chat.Component
 
 object ToolboxBuilder {
     private const val GAP = 2
     private val INFO_COLOR = 0xFF5555FF.toInt()
     private val WARNING_COLOR = 0xFFFFFF00.toInt()
 
-    fun styleBuilder(target: DirectionalLayoutWidget, key: String, rebuild: () -> Unit) {
-        fun addLine(action: Style, keyTrue: String, keyFalse: String, grid: GridWidget, row: Int) {
-            grid.add(label("$action"), row, 0)
-            grid.add(getInfo("$action"), row, 1)
-            grid.add(
+    fun styleBuilder(target: LinearLayout, key: String, rebuild: () -> Unit) {
+        fun addLine(action: Style, keyTrue: String, keyFalse: String, grid: GridLayout, row: Int) {
+            grid.addChild(label("$action"), row, 0)
+            grid.addChild(getInfo("$action"), row, 1)
+            grid.addChild(
                 buttonGroup(listOf(
                         OnOffButtonProperties(action, true, keyTrue),
                         OnOffButtonProperties(action, false, keyFalse)
@@ -38,20 +38,20 @@ object ToolboxBuilder {
             .buildInto(target, rebuild)
     }
 
-    fun positionBuilder(target: DirectionalLayoutWidget, key: String, rebuild: () -> Unit) {
-        fun addPositionLine(action: Position, grid: GridWidget, row: Int, infoKey: String? = null, warningKey: String? = null) {
-            grid.add(label("$action"), row, 0)
-            grid.add(positionGroup(action, infoKey, warningKey), row, 1)
+    fun positionBuilder(target: LinearLayout, key: String, rebuild: () -> Unit) {
+        fun addPositionLine(action: Position, grid: GridLayout, row: Int, infoKey: String? = null, warningKey: String? = null) {
+            grid.addChild(label("$action"), row, 0)
+            grid.addChild(positionGroup(action, infoKey, warningKey), row, 1)
         }
 
-        fun addAlignmentLine(action: Alignment, flow: DirectionalLayoutWidget, infoKey: String? = null) {
-            val layout = DirectionalLayoutWidget.horizontal().spacing(GAP)
-            layout.mainPositioner.alignVerticalCenter()
-            layout.add(button(action, Unit))
+        fun addAlignmentLine(action: Alignment, flow: LinearLayout, infoKey: String? = null) {
+            val layout = LinearLayout.horizontal().spacing(GAP)
+            layout.defaultCellSetting().alignVerticallyMiddle()
+            layout.addChild(button(action, Unit))
             if (infoKey != null) {
-                layout.add(getInfo(infoKey))
+                layout.addChild(getInfo(infoKey))
             }
-            flow.add(layout)
+            flow.addChild(layout)
         }
 
         FlowToolboxBuilder(key)
@@ -87,23 +87,23 @@ object ToolboxBuilder {
             .buildInto(target, rebuild)
     }
 
-    fun rotationBuilder(target: DirectionalLayoutWidget, key: String, rebuild: () -> Unit) {
-        fun addAdjustmentsLine(action: Rotation, grid: GridWidget, row: Int) {
-            grid.add(label("$action"), row, 0)
-            grid.add(adjustmentGroup(action), row, 1)
+    fun rotationBuilder(target: LinearLayout, key: String, rebuild: () -> Unit) {
+        fun addAdjustmentsLine(action: Rotation, grid: GridLayout, row: Int) {
+            grid.addChild(label("$action"), row, 0)
+            grid.addChild(adjustmentGroup(action), row, 1)
         }
 
         FlowToolboxBuilder(key)
             .add { flow ->
-                flow.add(textLabel(Text.translatable("asc.screen.angle_steps")))
-                flow.add(angleStepGroup())
+                flow.addChild(textLabel(Component.translatable("asc.screen.angle_steps")))
+                flow.addChild(angleStepGroup())
             }
             .add { innerFlow ->
-                val layout = DirectionalLayoutWidget.horizontal().spacing(GAP)
-                layout.mainPositioner.alignVerticalCenter()
-                layout.add(textLabel(Text.translatable("asc.screen.rotations")))
-                innerFlow.add(layout)
-                innerFlow.add(rotationGroup())
+                val layout = LinearLayout.horizontal().spacing(GAP)
+                layout.defaultCellSetting().alignVerticallyMiddle()
+                layout.addChild(textLabel(Component.translatable("asc.screen.rotations")))
+                innerFlow.addChild(layout)
+                innerFlow.addChild(rotationGroup())
             }
             .add { flow ->
                 GridToolboxBuilder("adjustments", defaultExpanded = false)
@@ -118,20 +118,20 @@ object ToolboxBuilder {
             .buildInto(target, rebuild)
     }
 
-    fun poseBuilder(target: DirectionalLayoutWidget, key: String, rebuild: () -> Unit) {
-        fun addPointingLine(action: Pointing, grid: GridWidget, row: Int, startColumn: Int) {
-            grid.add(label("$action"), row, startColumn)
-            grid.add(buttonGroup<Pointing.Direction>(action), row, startColumn + 1)
+    fun poseBuilder(target: LinearLayout, key: String, rebuild: () -> Unit) {
+        fun addPointingLine(action: Pointing, grid: GridLayout, row: Int, startColumn: Int) {
+            grid.addChild(label("$action"), row, startColumn)
+            grid.addChild(buttonGroup<Pointing.Direction>(action), row, startColumn + 1)
         }
 
-        fun addSwapMainHandLine(grid: GridWidget, row: Int) {
-            grid.add(textLabel(Text.translatable("asc.screen.swap_main_hand")), row, 0)
-            grid.add(buttonGroup<StandUtility.SwapTarget>(StandUtility.swap_main_hand), row, 1)
+        fun addSwapMainHandLine(grid: GridLayout, row: Int) {
+            grid.addChild(textLabel(Component.translatable("asc.screen.swap_main_hand")), row, 0)
+            grid.addChild(buttonGroup<StandUtility.SwapTarget>(StandUtility.swap_main_hand), row, 1)
         }
 
-        fun addMirrorLine(action: StandUtility, grid: GridWidget, row: Int) {
-            grid.add(label("$action"), row, 0)
-            grid.add(buttonGroup<StandUtility.MirrorDirection>(action), row, 1)
+        fun addMirrorLine(action: StandUtility, grid: GridLayout, row: Int) {
+            grid.addChild(label("$action"), row, 0)
+            grid.addChild(buttonGroup<StandUtility.MirrorDirection>(action), row, 1)
         }
 
         FlowToolboxBuilder(key)
@@ -152,86 +152,86 @@ object ToolboxBuilder {
             .add { flow ->
                 FlowToolboxBuilder("utility", defaultExpanded = false)
                     .add { innerFlow ->
-                        val layout = GridWidget().setSpacing(GAP)
-                        layout.mainPositioner.alignLeft().alignVerticalCenter()
+                        val layout = GridLayout().spacing(GAP)
+                        layout.defaultCellSetting().alignHorizontallyLeft().alignVerticallyMiddle()
                         addSwapMainHandLine(layout, 0)
                         addMirrorLine(StandUtility.mirror_arms, layout, 1)
                         addMirrorLine(StandUtility.mirror_legs, layout, 2)
-                        innerFlow.add(layout)
+                        innerFlow.addChild(layout)
                     }
-                    .add { innerFlow -> innerFlow.add(button(StandUtility.flip, Unit)) }
+                    .add { innerFlow -> innerFlow.addChild(button(StandUtility.flip, Unit)) }
                     .buildInto(flow, rebuild)
             }
             .buildInto(target, rebuild)
     }
 
-    private fun tr() = MinecraftClient.getInstance().textRenderer
+    private fun tr() = Minecraft.getInstance().font
 
-    private fun textLabel(text: Text): TextWidget = TextWidget(text, tr())
+    private fun textLabel(text: Component): StringWidget = StringWidget(text, tr())
 
-    private fun label(key: String): TextWidget = textLabel(Text.translatable("asc.screen.$key"))
+    private fun label(key: String): StringWidget = textLabel(Component.translatable("asc.screen.$key"))
 
     private fun button(
         trigger: ArmorStatuesTriggers, value: Any, key: String = "$trigger",
         renderer: ButtonRenderer? = null, tooltipKey: String? = null
     ): NineSliceButtonWidget {
-        val btn = NineSliceButtonWidget.of(Text.translatable("asc.screen.$key"), renderer ?: ButtonTextures.DEFAULT_RENDERER) {
+        val btn = NineSliceButtonWidget.of(Component.translatable("asc.screen.$key"), renderer ?: ButtonTextures.DEFAULT_RENDERER) {
             trigger.accept(value)
         }
         addTooltip(btn, tooltipKey)
         return btn
     }
 
-    private fun buttonGroup(btnProperties: Collection<ButtonProperties>): DirectionalLayoutWidget {
-        val layout = DirectionalLayoutWidget.horizontal().spacing(GAP)
-        layout.mainPositioner.alignVerticalCenter()
+    private fun buttonGroup(btnProperties: Collection<ButtonProperties>): LinearLayout {
+        val layout = LinearLayout.horizontal().spacing(GAP)
+        layout.defaultCellSetting().alignVerticallyMiddle()
         for (btnProperty in btnProperties) {
-            layout.add(button(btnProperty.action, btnProperty.value, btnProperty.key, btnProperty.renderer))
+            layout.addChild(button(btnProperty.action, btnProperty.value, btnProperty.key, btnProperty.renderer))
         }
 
         return layout
     }
 
-    private inline fun <reified E : Enum<E>> buttonGroup(action: ArmorStatuesTriggers): DirectionalLayoutWidget {
+    private inline fun <reified E : Enum<E>> buttonGroup(action: ArmorStatuesTriggers): LinearLayout {
         return buttonGroup(E::class.java.enumConstants.map { e -> BasicButtonProperties(action, e, "$e") })
     }
 
-    private fun angleStepGroup(): DirectionalLayoutWidget {
-        val layout = DirectionalLayoutWidget.horizontal().spacing(GAP)
-        layout.mainPositioner.alignVerticalCenter()
-        layout.add(button(Rotation.set_step_angle, Rotation.StepAngles.deg_1, "deg_1"))
-        layout.add(button(Rotation.set_step_angle, Rotation.StepAngles.deg_5, "deg_5"))
-        layout.add(button(Rotation.set_step_angle, Rotation.StepAngles.deg_15, "deg_15"))
-        layout.add(button(Rotation.set_step_angle, Rotation.StepAngles.deg_45, "deg_45"))
+    private fun angleStepGroup(): LinearLayout {
+        val layout = LinearLayout.horizontal().spacing(GAP)
+        layout.defaultCellSetting().alignVerticallyMiddle()
+        layout.addChild(button(Rotation.set_step_angle, Rotation.StepAngles.deg_1, "deg_1"))
+        layout.addChild(button(Rotation.set_step_angle, Rotation.StepAngles.deg_5, "deg_5"))
+        layout.addChild(button(Rotation.set_step_angle, Rotation.StepAngles.deg_15, "deg_15"))
+        layout.addChild(button(Rotation.set_step_angle, Rotation.StepAngles.deg_45, "deg_45"))
 
         return layout
     }
 
-    private fun positionGroup(action: Position, infoKey: String? = null, warningKey: String? = null): DirectionalLayoutWidget {
-        val layout = DirectionalLayoutWidget.horizontal().spacing(GAP)
-        layout.mainPositioner.alignVerticalCenter()
+    private fun positionGroup(action: Position, infoKey: String? = null, warningKey: String? = null): LinearLayout {
+        val layout = LinearLayout.horizontal().spacing(GAP)
+        layout.defaultCellSetting().alignVerticallyMiddle()
         if (action == Position.x || action == Position.y || action == Position.z) {
-            layout.add(button(action, Position.Offset.negative_8, "negative_8"))
-            layout.add(button(action, Position.Offset.negative_3, "negative_3"))
-            layout.add(button(action, Position.Offset.negative_1, "negative_1"))
+            layout.addChild(button(action, Position.Offset.negative_8, "negative_8"))
+            layout.addChild(button(action, Position.Offset.negative_3, "negative_3"))
+            layout.addChild(button(action, Position.Offset.negative_1, "negative_1"))
         } else {
-            layout.add(button(action, Position.AlignedExactOffset.negative_8, "negative_8"))
-            layout.add(button(action, Position.AlignedExactOffset.negative_3, "negative_3"))
-            layout.add(button(action, Position.AlignedExactOffset.negative_1, "negative_1"))
+            layout.addChild(button(action, Position.AlignedExactOffset.negative_8, "negative_8"))
+            layout.addChild(button(action, Position.AlignedExactOffset.negative_3, "negative_3"))
+            layout.addChild(button(action, Position.AlignedExactOffset.negative_1, "negative_1"))
         }
-        layout.add(textLabel(Text.literal("-")))
+        layout.addChild(textLabel(Component.literal("-")))
         if (action == Position.x || action == Position.y || action == Position.z) {
-            layout.add(button(action, Position.Offset.positive_1, "positive_1"))
-            layout.add(button(action, Position.Offset.positive_3, "positive_3"))
-            layout.add(button(action, Position.Offset.positive_8, "positive_8"))
+            layout.addChild(button(action, Position.Offset.positive_1, "positive_1"))
+            layout.addChild(button(action, Position.Offset.positive_3, "positive_3"))
+            layout.addChild(button(action, Position.Offset.positive_8, "positive_8"))
         } else {
-            layout.add(button(action, Position.AlignedExactOffset.positive_1, "positive_1"))
-            layout.add(button(action, Position.AlignedExactOffset.positive_3, "positive_3"))
-            layout.add(button(action, Position.AlignedExactOffset.positive_8, "positive_8"))
+            layout.addChild(button(action, Position.AlignedExactOffset.positive_1, "positive_1"))
+            layout.addChild(button(action, Position.AlignedExactOffset.positive_3, "positive_3"))
+            layout.addChild(button(action, Position.AlignedExactOffset.positive_8, "positive_8"))
         }
 
         if (infoKey != null) {
-            layout.add(getInfo(infoKey))
+            layout.addChild(getInfo(infoKey))
         }
 
         addWarning(layout, warningKey)
@@ -239,49 +239,47 @@ object ToolboxBuilder {
         return layout
     }
 
-    private fun rotationGroup(): DirectionalLayoutWidget {
-        val layout = DirectionalLayoutWidget.horizontal().spacing(GAP)
-        layout.mainPositioner.alignVerticalCenter()
-        layout.add(button(Rotation.rotate, Rotation.Direction.left, "left"))
-        layout.add(button(Rotation.rotate, Rotation.Direction.right, "right"))
-        layout.add(button(Rotation.rotate, Rotation.Direction.toward, "toward"))
-        layout.add(button(Rotation.rotate, Rotation.Direction.away, "away"))
+    private fun rotationGroup(): LinearLayout {
+        val layout = LinearLayout.horizontal().spacing(GAP)
+        layout.defaultCellSetting().alignVerticallyMiddle()
+        layout.addChild(button(Rotation.rotate, Rotation.Direction.left, "left"))
+        layout.addChild(button(Rotation.rotate, Rotation.Direction.right, "right"))
+        layout.addChild(button(Rotation.rotate, Rotation.Direction.toward, "toward"))
+        layout.addChild(button(Rotation.rotate, Rotation.Direction.away, "away"))
         return layout
     }
 
-    private fun adjustmentGroup(action: Rotation): DirectionalLayoutWidget {
-        val layout = DirectionalLayoutWidget.horizontal().spacing(GAP)
-        layout.mainPositioner.alignVerticalCenter()
-        layout.add(button(action, Rotation.AxisDirection.negative_x, "negative_x"))
-        layout.add(button(action, Rotation.AxisDirection.positive_x, "positive_x"))
-        layout.add(textLabel(Text.literal("-")))
-        layout.add(button(action, Rotation.AxisDirection.negative_y, "negative_y"))
-        layout.add(button(action, Rotation.AxisDirection.positive_y, "positive_y"))
-        layout.add(textLabel(Text.literal("-")))
-        layout.add(button(action, Rotation.AxisDirection.negative_z, "negative_z"))
-        layout.add(button(action, Rotation.AxisDirection.positive_z, "positive_z"))
+    private fun adjustmentGroup(action: Rotation): LinearLayout {
+        val layout = LinearLayout.horizontal().spacing(GAP)
+        layout.defaultCellSetting().alignVerticallyMiddle()
+        layout.addChild(button(action, Rotation.AxisDirection.negative_x, "negative_x"))
+        layout.addChild(button(action, Rotation.AxisDirection.positive_x, "positive_x"))
+        layout.addChild(textLabel(Component.literal("-")))
+        layout.addChild(button(action, Rotation.AxisDirection.negative_y, "negative_y"))
+        layout.addChild(button(action, Rotation.AxisDirection.positive_y, "positive_y"))
+        layout.addChild(textLabel(Component.literal("-")))
+        layout.addChild(button(action, Rotation.AxisDirection.negative_z, "negative_z"))
+        layout.addChild(button(action, Rotation.AxisDirection.positive_z, "positive_z"))
         return layout
     }
 
-    private fun addTooltip(component: ClickableWidget, key: String?) {
+    private fun addTooltip(component: AbstractWidget, key: String?) {
         if (key != null) {
-            component.setTooltip(Tooltip.of(Text.translatable("asc.screen.tooltip.$key")))
+            component.setTooltip(Tooltip.create(Component.translatable("asc.screen.tooltip.$key")))
         }
     }
 
-    private fun getInfo(key: String?): TextWidget {
-        val infoLbl = textLabel(Text.literal("🛈"))
-        infoLbl.setTextColor(INFO_COLOR)
+    private fun getInfo(key: String?): StringWidget {
+        val infoLbl = textLabel(Component.literal("🛈").withColor(INFO_COLOR))
         addTooltip(infoLbl, key)
         return infoLbl
     }
 
-    private fun addWarning(layout: DirectionalLayoutWidget, key: String?) {
+    private fun addWarning(layout: LinearLayout, key: String?) {
         if (key != null) {
-            val warningLbl = textLabel(Text.literal("⚠"))
-            warningLbl.setTextColor(WARNING_COLOR)
+            val warningLbl = textLabel(Component.literal("⚠").withColor(WARNING_COLOR))
             addTooltip(warningLbl, key)
-            layout.add(warningLbl)
+            layout.addChild(warningLbl)
         }
     }
 
@@ -318,28 +316,28 @@ object ToolboxBuilder {
             return this
         }
 
-        fun buildInto(target: DirectionalLayoutWidget, rebuild: () -> Unit) {
+        fun buildInto(target: LinearLayout, rebuild: () -> Unit) {
             val layout = create()
             populate(layout)
 
-            val section = CollapsibleSection(key, Text.translatable("asc.screen.$key"), defaultExpanded, tooltipKey) { layout }
+            val section = CollapsibleSection(key, Component.translatable("asc.screen.$key"), defaultExpanded, tooltipKey) { layout }
             section.addTo(target, rebuild)
         }
 
-        protected abstract fun create(): Widget
-        protected abstract fun populate(layout: Widget)
+        protected abstract fun create(): Layout
+        protected abstract fun populate(layout: Layout)
     }
 
     private class GridToolboxBuilder(key: String, private val columns: Int = 2, defaultExpanded: Boolean = true, tooltipKey: String? = null) :
-        ToolboxBuilder<(GridWidget, Int) -> Unit>(key, defaultExpanded, tooltipKey) {
-        override fun create(): Widget {
-            val layout = GridWidget().setSpacing(GAP)
-            layout.mainPositioner.alignLeft().alignVerticalCenter()
+        ToolboxBuilder<(GridLayout, Int) -> Unit>(key, defaultExpanded, tooltipKey) {
+        override fun create(): Layout {
+            val layout = GridLayout().spacing(GAP)
+            layout.defaultCellSetting().alignHorizontallyLeft().alignVerticallyMiddle()
             return layout
         }
 
-        override fun populate(layout: Widget) {
-            val grid = layout as GridWidget
+        override fun populate(layout: Layout) {
+            val grid = layout as GridLayout
             for (row in consumerList.indices) {
                 consumerList[row](grid, row)
             }
@@ -347,15 +345,15 @@ object ToolboxBuilder {
     }
 
     private class FlowToolboxBuilder(key: String, defaultExpanded: Boolean = true, tooltipKey: String? = null) :
-        ToolboxBuilder<(DirectionalLayoutWidget) -> Unit>(key, defaultExpanded, tooltipKey) {
-        override fun create(): Widget {
-            val layout = DirectionalLayoutWidget.vertical().spacing(GAP)
-            layout.mainPositioner.alignLeft()
+        ToolboxBuilder<(LinearLayout) -> Unit>(key, defaultExpanded, tooltipKey) {
+        override fun create(): Layout {
+            val layout = LinearLayout.vertical().spacing(GAP)
+            layout.defaultCellSetting().alignHorizontallyLeft()
             return layout
         }
 
-        override fun populate(layout: Widget) {
-            val flow = layout as DirectionalLayoutWidget
+        override fun populate(layout: Layout) {
+            val flow = layout as LinearLayout
             for (consumer in consumerList) {
                 consumer(flow)
             }

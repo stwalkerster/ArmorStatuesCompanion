@@ -2,14 +2,13 @@ package net.asch.asc.ui.component
 
 import net.asch.asc.ModClient
 import net.asch.asc.as_datapack.triggers.Presets
-import net.minecraft.client.MinecraftClient
-import net.minecraft.client.gl.RenderPipelines
-import net.minecraft.client.gui.Click
-import net.minecraft.client.gui.Drawable
-import net.minecraft.client.gui.DrawContext
-import net.minecraft.client.gui.widget.AlwaysSelectedEntryListWidget
-import net.minecraft.text.Text
-import net.minecraft.util.Identifier
+import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.minecraft.client.gui.components.ObjectSelectionList
+import net.minecraft.client.gui.components.Renderable
+import net.minecraft.client.renderer.RenderPipelines
+import net.minecraft.network.chat.Component
+import net.minecraft.resources.Identifier
 
 /**
  * Replaces PresetPanel.kt. Not itself a widget -- exposes the pieces (a scrollable
@@ -25,7 +24,7 @@ class PresetPanelWidget(screenWidth: Int, screenHeight: Int) {
 
     val listWidget: PresetListWidget
     val previewButton: NineSliceButtonWidget
-    val backgroundDrawable: Drawable
+    val backgroundDrawable: Renderable
 
     private var selectedPreset: Presets? = null
 
@@ -44,15 +43,15 @@ class PresetPanelWidget(screenWidth: Int, screenHeight: Int) {
         val previewX = x + width - columnWidth
         val previewY = y + 8
 
-        listWidget = PresetListWidget(MinecraftClient.getInstance(), listWidth, listHeight, listY, ITEM_HEIGHT) { preset ->
+        listWidget = PresetListWidget(Minecraft.getInstance(), listWidth, listHeight, listY, ITEM_HEIGHT) { preset ->
             selectedPreset = preset
             val key = if (preset == Presets.randomized) "set_randomized_preset" else "set_preset"
-            previewButton.setMessage(Text.translatable("asc.screen.$key"))
+            previewButton.message = Component.translatable("asc.screen.$key")
             previewButton.visible = true
         }
         listWidget.x = listX
 
-        previewButton = NineSliceButtonWidget.of(Text.translatable("asc.screen.set_preset"), ButtonTextures.DEFAULT_RENDERER) {
+        previewButton = NineSliceButtonWidget.of(Component.translatable("asc.screen.set_preset"), ButtonTextures.DEFAULT_RENDERER) {
             selectedPreset?.accept(Unit)
         }
         previewButton.visible = false
@@ -62,15 +61,15 @@ class PresetPanelWidget(screenWidth: Int, screenHeight: Int) {
         val previewImageX = previewX + (columnWidth - PREVIEW_SIZE) / 2
         val previewImageY = previewY + NineSliceButtonWidget.DEFAULT_HEIGHT + 10
 
-        backgroundDrawable = Drawable { context, _, _, _ ->
+        backgroundDrawable = Renderable { context, _, _, _ ->
             context.fill(x, y, x + width, y + height, PANEL_COLOR)
             context.fill(listX, listY, listX + listWidth, listY + listHeight, LIST_BG_COLOR)
             drawOutline(context, listX, listY, listWidth, listHeight, OUTLINE_COLOR)
 
             val preset = selectedPreset
             if (preset != null && preset != Presets.randomized) {
-                val textureId = Identifier.of(ModClient.MOD_ID, "textures/presets/${preset.name.lowercase()}.png")
-                context.drawTexture(
+                val textureId = Identifier.fromNamespaceAndPath(ModClient.MOD_ID, "textures/presets/${preset.name.lowercase()}.png")
+                context.blit(
                     RenderPipelines.GUI_TEXTURED, textureId,
                     previewImageX, previewImageY, 0f, 0f,
                     PREVIEW_SIZE, PREVIEW_SIZE, PREVIEW_SIZE, PREVIEW_SIZE
@@ -79,7 +78,7 @@ class PresetPanelWidget(screenWidth: Int, screenHeight: Int) {
         }
     }
 
-    private fun drawOutline(context: DrawContext, x: Int, y: Int, w: Int, h: Int, color: Int) {
+    private fun drawOutline(context: GuiGraphicsExtractor, x: Int, y: Int, w: Int, h: Int, color: Int) {
         context.fill(x, y, x + w, y + 1, color)
         context.fill(x, y + h - 1, x + w, y + h, color)
         context.fill(x, y, x + 1, y + h, color)
@@ -96,10 +95,10 @@ class PresetPanelWidget(screenWidth: Int, screenHeight: Int) {
 }
 
 class PresetListWidget(
-    client: MinecraftClient,
+    client: Minecraft,
     width: Int, height: Int, y: Int, itemHeight: Int,
     private val onSelected: (Presets) -> Unit
-) : AlwaysSelectedEntryListWidget<PresetListWidget.PresetEntry>(client, width, height, y, itemHeight) {
+) : ObjectSelectionList<PresetListWidget.PresetEntry>(client, width, height, y, itemHeight) {
 
     init {
         for (preset in Presets.entries) {
@@ -113,26 +112,26 @@ class PresetListWidget(
     }
 
     inner class PresetEntry(val preset: Presets) : Entry<PresetEntry>() {
-        override fun getNarration(): Text = Text.translatable("asc.screen.preset.$preset")
+        override fun getNarration(): Component = Component.translatable("asc.screen.preset.$preset")
 
-        override fun render(
-            context: DrawContext,
+        override fun extractContent(
+            context: GuiGraphicsExtractor,
             mouseX: Int,
             mouseY: Int,
             hovered: Boolean,
             tickDelta: Float
         ) {
-            if (this@PresetListWidget.getSelectedOrNull() === this) {
+            if (this@PresetListWidget.selected === this) {
                 context.fill(x, y, x + width, y + height, 1140916224) // 0x4400FF00
             } else if (hovered) {
                 context.fill(x, y, x + width, y + height, 1157627903) // 0x44FFFFFF
             }
 
-            val textRenderer = MinecraftClient.getInstance().textRenderer
-            context.drawText(
-                textRenderer,
-                Text.translatable("asc.screen.preset.$preset"),
-                x + 2, y + (height - textRenderer.fontHeight) / 2,
+            val font = Minecraft.getInstance().font
+            context.text(
+                font,
+                Component.translatable("asc.screen.preset.$preset"),
+                x + 2, y + (height - font.lineHeight) / 2,
                 -1, false
             )
         }

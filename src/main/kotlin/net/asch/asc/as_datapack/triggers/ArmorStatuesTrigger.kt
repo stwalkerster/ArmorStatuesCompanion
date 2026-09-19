@@ -1,7 +1,7 @@
 package net.asch.asc.as_datapack.triggers
 
 import net.asch.asc.as_datapack.ArmorStatuesHelper
-import net.minecraft.client.MinecraftClient
+import net.minecraft.client.Minecraft
 import java.util.function.Consumer
 import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
@@ -27,7 +27,7 @@ class Trigger <T: Any>(private val id: Int, private val clazz: KClass<T>) : Armo
     override fun accept(value: Any) {
         val offset = getOffset(value)
         print("id=$id + $offset")
-        ArmorStatuesHelper.trigger(MinecraftClient.getInstance(), id + offset)
+        ArmorStatuesHelper.trigger(Minecraft.getInstance(), id + offset)
     }
 
     override fun <V> acceptClass(clazz: Class<V>): Boolean = this.clazz == clazz

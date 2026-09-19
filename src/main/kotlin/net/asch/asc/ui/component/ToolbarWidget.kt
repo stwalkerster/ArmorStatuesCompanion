@@ -1,32 +1,34 @@
 package net.asch.asc.ui.component
 
-import net.minecraft.client.MinecraftClient
-import net.minecraft.client.gui.DrawContext
-import net.minecraft.client.gui.widget.DirectionalLayoutWidget
-import net.minecraft.client.gui.widget.PressableWidget
-import net.minecraft.client.input.AbstractInput
-import net.minecraft.text.Text
+import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.minecraft.client.gui.components.AbstractButton
+import net.minecraft.client.gui.components.AbstractWidget
+import net.minecraft.client.gui.layouts.LinearLayout
+import net.minecraft.client.gui.narration.NarrationElementOutput
+import net.minecraft.client.input.InputWithModifiers
+import net.minecraft.network.chat.Component
 
 /**
- * Wraps a vanilla DirectionalLayoutWidget -- the screen positions/refreshes/registers
- * [widget]'s children directly (vanilla widgets aren't Drawable themselves).
+ * Wraps a vanilla LinearLayout -- the screen positions/refreshes/registers
+ * [widget]'s children directly (vanilla widgets aren't Renderable-on-their-own the way layouts are).
  */
 class ToolbarWidget {
-    val widget: DirectionalLayoutWidget = DirectionalLayoutWidget.horizontal().spacing(GAP)
+    val widget: LinearLayout = LinearLayout.horizontal().spacing(GAP)
     private val exclusiveGroups: MutableMap<String, MutableList<ToolButtonWidget>> = mutableMapOf()
 
     init {
-        widget.mainPositioner.alignVerticalCenter()
+        widget.defaultCellSetting().alignVerticallyMiddle()
     }
 
     fun toolbox(
-        text: Text,
+        text: Component,
         id: String,
         exclusiveGroup: String? = null,
         action: (ToolButtonWidget) -> Unit
     ): ToolButtonWidget {
         val btn = ToolButtonWidget(text, id, action)
-        widget.add(btn)
+        widget.addChild(btn)
 
         if (exclusiveGroup != null) {
             val list = exclusiveGroups.getOrPut(exclusiveGroup) { mutableListOf() }
@@ -44,9 +46,9 @@ class ToolbarWidget {
         return btn
     }
 
-    fun button(text: Text, action: () -> Unit): NineSliceButtonWidget {
+    fun button(text: Component, action: () -> Unit): NineSliceButtonWidget {
         val btn = NineSliceButtonWidget.of(text, ButtonTextures.TOOLBAR_BASE_RENDERER) { action() }
-        widget.add(btn)
+        widget.addChild(btn)
         return btn
     }
 
@@ -70,12 +72,12 @@ class ToolbarWidget {
 }
 
 class ToolButtonWidget(
-    text: Text,
+    text: Component,
     val toolboxId: String,
     private val onPressAction: (ToolButtonWidget) -> Unit
-) : PressableWidget(
+) : AbstractButton(
     0, 0,
-    MinecraftClient.getInstance().textRenderer.getWidth(text) + NineSliceButtonWidget.PADDING_X * 2,
+    Minecraft.getInstance().font.width(text) + NineSliceButtonWidget.PADDING_X * 2,
     NineSliceButtonWidget.DEFAULT_HEIGHT,
     text
 ) {
@@ -86,17 +88,17 @@ class ToolButtonWidget(
         private set
     var onActiveChanged: ((Boolean) -> Unit)? = null
 
-    override fun onPress(input: AbstractInput) {
+    override fun onPress(input: InputWithModifiers) {
         onPressAction(this)
     }
 
-    override fun renderWidget(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
+    override fun extractContents(context: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, delta: Float) {
         ButtonTextures.TOOLBAR_TOOL_RENDERER(context, this)
-        drawMessage(context, MinecraftClient.getInstance().textRenderer, -1)
+        context.centeredText(Minecraft.getInstance().font, message, x + width / 2, y + (height - 8) / 2, -1)
     }
 
-    override fun appendClickableNarrations(builder: net.minecraft.client.gui.screen.narration.NarrationMessageBuilder) {
-        appendDefaultNarrations(builder)
+    override fun updateWidgetNarration(output: NarrationElementOutput) {
+        defaultButtonNarrationText(output)
     }
 
     fun setActive() {
