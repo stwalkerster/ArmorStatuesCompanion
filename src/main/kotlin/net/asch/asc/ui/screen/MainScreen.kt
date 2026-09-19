@@ -1,64 +1,85 @@
 package net.asch.asc.ui.screen
 
-import io.wispforest.owo.ui.base.BaseOwoScreen
-import io.wispforest.owo.ui.container.Containers
-import io.wispforest.owo.ui.container.FlowLayout
-import io.wispforest.owo.ui.container.OverlayContainer
-import io.wispforest.owo.ui.core.Insets
-import io.wispforest.owo.ui.core.OwoUIAdapter
-import io.wispforest.owo.ui.core.Sizing
 import net.asch.asc.as_datapack.ArmorStatuesHelper
 import net.asch.asc.as_datapack.triggers.Utility
-import net.asch.asc.ui.component.PresetPanel
-import net.asch.asc.ui.component.ToolbarComponent
+import net.asch.asc.ui.component.PresetPanelWidget
+import net.asch.asc.ui.component.ToolbarWidget
 import net.asch.asc.ui.component.ToolboxBuilder
 import net.minecraft.client.MinecraftClient
+import net.minecraft.client.gui.DrawContext
+import net.minecraft.client.gui.screen.Screen
+import net.minecraft.client.gui.widget.DirectionalLayoutWidget
 import net.minecraft.text.Text
-import java.util.function.BiConsumer
 
-class MainScreen : BaseOwoScreen<FlowLayout>() {
+class MainScreen : Screen(Text.translatable("asc.screen.title")) {
     companion object {
         private const val GAP: Int = 1
-        private const val MARGINS: Int = 2
         private var activeToolbox: String? = null
     }
 
-    private val mainToolbar = ToolbarComponent()
-    private val utilityToolbar = ToolbarComponent()
-    private var presetPanel: OverlayContainer<PresetPanel>? = null
+    private val mainToolbar = ToolbarWidget()
+    private val utilityToolbar = ToolbarWidget()
+    private var showingPresets = false
 
-    override fun createAdapter(): OwoUIAdapter<FlowLayout> {
-        return OwoUIAdapter.create(this, Containers::verticalFlow)
+    init {
+        buildMainToolbar(mainToolbar)
+        buildUtilityToolbar(utilityToolbar)
     }
 
-    override fun build(rootComponent: FlowLayout) {
-        rootComponent.gap(GAP)
+    override fun init() {
+        if (showingPresets) {
+            val panel = PresetPanelWidget(width, height)
+            addDrawable(panel.backgroundDrawable)
+            addDrawableChild(panel.listWidget)
+            addDrawableChild(panel.previewButton)
+            return
+        }
 
-        rootComponent.child(mainToolbar)
-        buildMainToolbar(mainToolbar)
+        mainToolbar.widget.setX(GAP)
+        mainToolbar.widget.setY(GAP)
+        mainToolbar.widget.refreshPositions()
+        mainToolbar.widget.forEachChild(this::addDrawableChild)
 
-        rootComponent.child(utilityToolbar)
-        buildUtilityToolbar(utilityToolbar)
+        utilityToolbar.widget.setX(GAP)
+        utilityToolbar.widget.setY(GAP + mainToolbar.widget.height + GAP)
+        utilityToolbar.widget.refreshPositions()
+        utilityToolbar.widget.forEachChild(this::addDrawableChild)
 
-        val mainLayout = Containers.horizontalFlow(Sizing.content(), Sizing.content())
-        mainLayout.margins(Insets.of(MARGINS))
-        mainLayout.id("main")
+        val mainContent = DirectionalLayoutWidget.vertical().spacing(GAP)
+        mainContent.mainPositioner.alignLeft()
+        mainContent.setX(GAP)
+        mainContent.setY(utilityToolbar.widget.y + utilityToolbar.widget.height + GAP)
 
-        val mainScrollable = Containers.verticalScroll(Sizing.content(), Sizing.fill(75), mainLayout)
-        rootComponent.child(mainScrollable)
+        when (activeToolbox) {
+            "style" -> ToolboxBuilder.styleBuilder(mainContent, "style", ::clearAndInit)
+            "position" -> ToolboxBuilder.positionBuilder(mainContent, "position", ::clearAndInit)
+            "rotation" -> ToolboxBuilder.rotationBuilder(mainContent, "rotation", ::clearAndInit)
+            "pose" -> ToolboxBuilder.poseBuilder(mainContent, "pose", ::clearAndInit)
+        }
 
-        mainToolbar.press("toolbox", activeToolbox)
+        mainContent.refreshPositions()
+        mainContent.forEachChild(this::addDrawableChild)
+
+        mainToolbar.syncActive("toolbox", activeToolbox)
     }
 
     override fun shouldPause(): Boolean {
         return false
     }
 
-    private fun buildMainToolbar(toolbar: ToolbarComponent) {
-        addToolbarButton(toolbar, "style", "toolbox", ToolboxBuilder::styleBuilder)
-        addToolbarButton(toolbar, "position", "toolbox", ToolboxBuilder::positionBuilder)
-        addToolbarButton(toolbar, "rotation", "toolbox", ToolboxBuilder::rotationBuilder)
-        addToolbarButton(toolbar, "pose", "toolbox", ToolboxBuilder::poseBuilder)
+    // The game's real per-frame entry point, Screen.renderWithTooltip(), unconditionally
+    // calls renderBackground() before render() -- and the default renderBackground() applies
+    // blur/darkening (gated on the player's "Menu Background Blurriness" option) regardless of
+    // what render() itself does. Override it to a no-op so the live world stays fully visible
+    // and unblurred behind the toolbars, matching this screen's shouldPause() = false intent.
+    override fun renderBackground(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
+    }
+
+    private fun buildMainToolbar(toolbar: ToolbarWidget) {
+        addToolbarButton(toolbar, "style", "toolbox")
+        addToolbarButton(toolbar, "position", "toolbox")
+        addToolbarButton(toolbar, "rotation", "toolbox")
+        addToolbarButton(toolbar, "pose", "toolbox")
 
         toolbar.button(Text.translatable("asc.screen.presets")) { openPresetOverlay() }
         toolbar.button(Text.translatable("asc.screen.craft_adjustment_wand")) {
@@ -69,7 +90,7 @@ class MainScreen : BaseOwoScreen<FlowLayout>() {
         }
     }
 
-    private fun buildUtilityToolbar(toolbar: ToolbarComponent) {
+    private fun buildUtilityToolbar(toolbar: ToolbarWidget) {
         toolbar.button(Text.translatable("asc.screen.highlight")) { Utility.highlight.accept(Unit) }
         toolbar.button(Text.translatable("asc.screen.lock")) { Utility.lock.accept(Unit) }
         toolbar.button(Text.translatable("asc.screen.unlock")) { Utility.unlock.accept(Unit) }
@@ -80,30 +101,16 @@ class MainScreen : BaseOwoScreen<FlowLayout>() {
         toolbar.button(Text.translatable("asc.screen.repeat")) { ArmorStatuesHelper.repeat(MinecraftClient.getInstance()) }
     }
 
-    private fun addToolbarButton(
-        toolbarComponent: ToolbarComponent,
-        key: String,
-        exclusiveGroup: String? = null,
-        builder: BiConsumer<FlowLayout, String>
-    ) {
-        toolbarComponent.toolbox(Text.translatable("asc.screen.$key"), key, exclusiveGroup) { toolbarBtn ->
-            val mainLayout = uiAdapter.rootComponent.childById(FlowLayout::class.java, "main")!!
-            mainLayout.clearChildren()
-            builder.accept(mainLayout, key)
-            toolbarBtn.setActive()
-            activeToolbox = toolbarBtn.id()
+    private fun addToolbarButton(toolbar: ToolbarWidget, key: String, exclusiveGroup: String? = null) {
+        toolbar.toolbox(Text.translatable("asc.screen.$key"), key, exclusiveGroup) { btn ->
+            activeToolbox = key
+            btn.setActive()
+            clearAndInit()
         }
     }
 
     private fun openPresetOverlay() {
-        if (presetPanel != null) {
-            uiAdapter.rootComponent.removeChild(presetPanel)
-        }
-
-        val mainLayout = uiAdapter.rootComponent.childById(FlowLayout::class.java, "main")!!
-        mainLayout.clearChildren()
-
-        presetPanel = Containers.overlay(PresetPanel())
-        uiAdapter.rootComponent.child(presetPanel)
+        showingPresets = true
+        clearAndInit()
     }
 }

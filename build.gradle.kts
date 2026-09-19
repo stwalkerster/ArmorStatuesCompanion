@@ -16,11 +16,6 @@ repositories {
         name = "Fabric"
         url = uri("https://maven.fabricmc.net/")
     }
-
-    // WispForest for owo, etc.
-    maven {
-        url = uri("https://maven.wispforest.io")
-    }
 }
 
 dependencies {
@@ -34,9 +29,6 @@ dependencies {
     modImplementation(libs.fabric.loader)
     modImplementation(libs.fabric.api)
     modImplementation(libs.fabric.kotlin)
-
-    modImplementation(libs.owo.lib)
-    include(libs.owo.sentinel)
 }
 
 tasks.withType<ProcessResources>() {
@@ -80,7 +72,6 @@ if (modrinthToken != null) {
         dependencies {
             required.project("fabric-api")
             required.project("fabric-language-kotlin")
-            required.project("owo-lib")
         }
     }
 }
