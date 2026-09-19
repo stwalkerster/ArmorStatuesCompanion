@@ -3,7 +3,6 @@ armorStatuesCompanion = "1.4.1"
 fabric-loom = "1.14.0-alpha.9"
 kotlin-jvm = "2.0.21"
 modrinth-minotaur = "2.+"
-curseGradle= "1.6.1"
 minecraft = "1.21.10"
 yarn-mappings = "1.21.10+build.3"
 fabric-loader = "0.18.1"
@@ -24,4 +23,3 @@ owo-sentinel = { module = "io.wispforest:owo-sentinel", version.ref = "owo" }
 fabric-loom = { id = "fabric-loom", version.ref = "fabric-loom" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin-jvm" }
 modrinth-minotaur = { id = "com.modrinth.minotaur", version.ref = "modrinth-minotaur" }
-curseGradle = { id = "io.github.CDAGaming.cursegradle", version.ref = "curseGradle" }

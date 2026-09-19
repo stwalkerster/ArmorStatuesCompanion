@@ -4,16 +4,17 @@
   "version": "${version}",
   "environment": "client",
   "name": "Armor Statues Companion",
-  "description": "A mod companion for the Armor Statues Datapack (https://www.curseforge.com/minecraft/customization/armor-statues-datapack)",
+  "description": "A mod companion for the Armor Statues Datapack (https://vanillatweaks.net/picker/datapacks/)",
   "authors": [
     "Asch",
     "CEZero11",
-    "1.21.10 update by SkellyVamps"
+    "1.21.10 update by SkellyVamps",
+    "stwalkerster"
   ],
   "contact": {
-    "homepage": "https://modrinth.com/mod/armor-statues-companion",
-    "sources": "https://github.com/FlorentTomi/ArmorStatuesCompanion",
-    "issues": "https://github.com/FlorentTomi/ArmorStatuesCompanion/issues"
+    "homepage": "https://modrinth.com/project/armor-statues-companion-updated",
+    "sources": "https://github.com/stwalkerster/ArmorStatuesCompanion",
+    "issues": "https://github.com/stwalkerster/ArmorStatuesCompanion/issues"
   },
   "license": "CC0-1.0",
   "icon": "assets/armor-statues-companion/icon.png",
