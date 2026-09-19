@@ -1,5 +1,5 @@
 [versions]
-armorStatuesCompanion = "1.4.1"
+armorStatuesCompanion = "2.0.0"
 fabric-loom = "1.14.0-alpha.9"
 kotlin-jvm = "2.0.21"
 modrinth-minotaur = "2.+"

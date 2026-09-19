@@ -1,9 +1,2 @@
-## [v1.4.1+1.20.4]
-
----
-
-### API
-
----
-
-- Minecraft 1.20.4 support
+- Minecraft 1.21.10 support
+- Migration away from owo-lib to native Minecraft UI components
